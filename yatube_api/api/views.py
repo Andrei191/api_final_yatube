@@ -1,14 +1,18 @@
 # TODO:  Напишите свой вариант
 from django.shortcuts import get_object_or_404
-from posts.models import Comment, Follow, Group, Post, User
-from rest_framework import filters, permissions, status, viewsets
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import filters, mixins, permissions, viewsets
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.response import Response
 
-from .permissions import IsAuthorOrReadOnlyPermission, ReadOnlyPermission
+from .permissions import IsAuthorOrReadOnlyPermission
 from .serializers import (CommentSerializer, FollowSerializer, GroupSerializer,
                           PostSerializer)
+
+from posts.models import Comment, Follow, Group, Post  # isort:skip
+
+
+class CreateListViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
+                        viewsets.GenericViewSet):
+    pass
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -37,34 +41,21 @@ class CommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user, post=post)
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+class GroupViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = (ReadOnlyPermission,)
+    permission_classes = (IsAuthorOrReadOnlyPermission, )
 
 
-class FollowViewSet(viewsets.ModelViewSet):
+class FollowViewSet(CreateListViewSet):
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
-    permission_classes = (permissions.IsAuthenticated,
-                          IsAuthorOrReadOnlyPermission)
+    permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('following__username',)
 
     def get_queryset(self):
-        user = self.request.user
-        follows = Follow.objects.filter(user=user)
-        return follows
+        return self.request.user.follower
 
     def perform_create(self, serializer):
-        following = self.request.data.get('following')
-        following_user = User.objects.get(id=following)
-        user = self.request.user
-        follow = Follow.objects.filter(
-            following=following_user).filter(user=user).exists()
-        if not follow and following_user != user:
-            serializer.save(user=self.request.user, following=following_user)
-        elif following_user == user:
-            raise PermissionDenied('Нельзя подписаться на самого себя')
-        else:
-            raise PermissionDenied('Вы уже подписались на этого автора')
+        serializer.save(user=self.request.user)
