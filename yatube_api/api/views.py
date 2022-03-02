@@ -7,7 +7,7 @@ from .permissions import IsAuthorOrReadOnlyPermission
 from .serializers import (CommentSerializer, FollowSerializer, GroupSerializer,
                           PostSerializer)
 
-from posts.models import Comment, Follow, Group, Post  # isort:skip
+from posts.models import Comment, Group, Post  # isort:skip
 
 
 class CreateListViewSet(mixins.ListModelMixin, mixins.CreateModelMixin,
@@ -48,7 +48,6 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class FollowViewSet(CreateListViewSet):
-    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (filters.SearchFilter,)
@@ -58,4 +57,4 @@ class FollowViewSet(CreateListViewSet):
         return self.request.user.follower
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user,)
