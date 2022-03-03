@@ -7,11 +7,11 @@ from .views import CommentViewSet, FollowViewSet, GroupViewSet, PostViewSet
 app_name = 'api'
 
 router = routers.DefaultRouter()
-router.register(r'posts', PostViewSet)
-router.register(r'groups', GroupViewSet)
+router.register('posts', PostViewSet)
+router.register('groups', GroupViewSet)
 router.register(r'posts/(?P<id>\d+)/comments', CommentViewSet,
                 basename="comments")
-router.register(r'follow', FollowViewSet, basename="follows")
+router.register('follow', FollowViewSet, basename="follows")
 
 
 urlpatterns = [
