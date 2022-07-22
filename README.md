@@ -112,3 +112,5 @@ request = requests.get(api, headers=headers)
   }
 ]
 ```
+Автор:
+<a href="https://github.com/Andrei191"> Карасев Андрей </a>.
